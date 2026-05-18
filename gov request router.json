@@ -1,0 +1,650 @@
+{
+  "name": "gov request router",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "/citizen-request",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "7e7de790-c996-4d7e-a464-d33734eabcf8",
+      "name": "Webhook",
+      "webhookId": "4aacf289-9124-4f27-b36c-1b94eef63e2b"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=TASK: You are a government request classification system.\n\nRULES:\n1) Classify the citizen request into EXACTLY one of these categories:\n   INFRASTRUCTURE, HEALTH, LICENSING, SOCIAL_SERVICES, EDUCATION, OTHER\n\n2) Assign a priority level based on these rules:\n   - CRITICAL: Involves immediate danger, public safety, or health emergency\n   - HIGH: Affects many people or has been unresolved for a long time\n   - MEDIUM: Standard service request with moderate impact\n   - LOW: General inquiry, suggestion, or non-urgent complaint\n\n3) Reply in this EXACT format and nothing else, no explanation, no extra text:\n   CATEGORY|PRIORITY\n\nEXAMPLES:\n- \"Gas leak near school\" → INFRASTRUCTURE|CRITICAL\n- \"Streetlight broken for 3 weeks on main road\" → INFRASTRUCTURE|HIGH\n- \"Need to renew my trade license\" → LICENSING|MEDIUM\n- \"Suggestion to add more benches in the park\" → OTHER|LOW\n\nREQUEST: {{ $json.message }}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        416,
+        0
+      ],
+      "id": "65641b41-b9dc-4a95-91a6-d1b2f95561ae",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": "llama3.1:8b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        416,
+        144
+      ],
+      "id": "acde8c97-d023-4903-a843-8ec695fa7141",
+      "name": "Ollama Chat Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "ipGLI2tPEipMaKHl",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const ticketId = 'TKT-' + Date.now();\nconst submittedAt = new Date().toISOString();\n\nreturn {\n  json: {\n    ...$input.first().json.body,\n    ticket_id: ticketId,\n    submitted_at: submittedAt\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "39cff0ce-2fe0-4b70-86e8-767f422e29d0",
+      "name": "Generate Ticket ID"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.category }}",
+                    "rightValue": "INFRASTRUCTURE",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "dde1efb9-771f-401c-b08b-5944dca00b00"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "INFRASTRUCTURE"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "f736a83b-f7f3-4345-8b52-a3f93ff4cf11",
+                    "leftValue": "={{ $json.category }}",
+                    "rightValue": "HEALTH",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "HEALTH"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "50a43322-dd46-459c-968b-be4a6dffa436",
+                    "leftValue": "={{ $json.category }}",
+                    "rightValue": "SOCIAL_SERVICES",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "SOCIAL_SERVICES"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "07952745-d5e1-46da-b06f-0f2fd71c7d10",
+                    "leftValue": "={{ $json.category }}",
+                    "rightValue": "EDUCATION",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "EDUCATION"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "a7fc2ab5-2d0c-46b6-bd3b-dbaa363739c6",
+                    "leftValue": "={{ $json.category }}",
+                    "rightValue": "OTHER",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "OTHER"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": 4
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        928,
+        -48
+      ],
+      "id": "7577cbd9-6386-4deb-ae99-988153dbb2d4",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "jsCode": "const previousData = $('Generate Ticket ID').first().json;\nconst raw = $input.first().json.text || '';\n\nconst validCategories = [\n  'INFRASTRUCTURE', 'HEALTH', 'LICENSING',\n  'SOCIAL_SERVICES', 'EDUCATION', 'OTHER'\n];\nconst validPriorities = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'];\n\n// Split the response by pipe\nconst parts = raw.split('|');\nlet category = parts[0]?.trim();\nlet priority = parts[1]?.trim();\n\n// Fallback for category\nif (!validCategories.includes(category)) {\n  category = validCategories.find(c => raw.includes(c)) || 'OTHER';\n}\n\n// Fallback for priority\nif (!validPriorities.includes(priority)) {\n  priority = validPriorities.find(p => raw.includes(p)) || 'MEDIUM';\n}\n\nreturn {\n  json: {\n    ...previousData,\n    category: category,\n    priority: priority\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        0
+      ],
+      "id": "066848f4-392e-4e84-a235-46c54f92f7a2",
+      "name": "Extract JSON from LLM"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{  \n\"department_name\": \"Ministry of Infrastructure\",\n\"department_email\" : \"infra@gov.ae\"}\n",
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1216,
+        -400
+      ],
+      "id": "8770d0b3-8c97-41d1-818f-857b133aba95",
+      "name": "MOI_details"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{  \n\"department_name\": \"Ministry of Health\",\n\"department_email\" : \"health@gov.ae\"}\n",
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1216,
+        -208
+      ],
+      "id": "3a9d17a8-2a04-433f-9c8e-156e08679dab",
+      "name": "MOH_details"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{  \n\"department_name\": \"Ministry of Social Services\",\n\"department_email\": \"social_services@gov.ae\"}\n",
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1216,
+        0
+      ],
+      "id": "2cc2c3a9-322c-43de-8c56-36b06338657b",
+      "name": "MSS_details"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{  \n\"department_name\": \"Ministry of Education\",\n\"department_email\" : \"education@gov.ae\"}\n",
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1216,
+        208
+      ],
+      "id": "72cf07c4-c18d-42ab-ade4-4f42fa948496",
+      "name": "MOE_details"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{  \n\"department_name\": \"Other\",\n\"department_email\" : \"other@gov.ae\"}\n",
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1216,
+        400
+      ],
+      "id": "cde82d5f-893e-4ed2-84f0-fb3718d6da4e",
+      "name": "other_details"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email }}",
+        "subject": "=Your Request Has Been Received — {{ $json.ticket_id }}",
+        "emailType": "text",
+        "message": "=Dear {{ $json.full_name }},  \n\nThank you for contacting us. Your request has been received and assigned  to the {{ $json.department_name }}.  \n\nTicket ID: {{ $json.ticket_id }} \nCategory: {{ $json.category }} \nSubmitted: {{ $json.submitted_at }}  \n\nYou will be contacted within 3-5 business days.  Government Services Portal",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1712,
+        -16
+      ],
+      "id": "dcbe8783-99b9-426a-8d96-2d9a5f5ce2c2",
+      "name": "Send a message",
+      "webhookId": "68f021e5-df5f-4710-a25a-cb7404112889",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ZocjLxSJXtcN9qEo",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1c9r0OLRk3k_DjwA9S6g0l_mQgZfD8OAc00R6hkMZTxU",
+          "mode": "list",
+          "cachedResultName": "Citizen Requests Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1c9r0OLRk3k_DjwA9S6g0l_mQgZfD8OAc00R6hkMZTxU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "={{ $json.category }}"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "ticket_id",
+              "displayName": "ticket_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "full_name",
+              "displayName": "full_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "category",
+              "displayName": "category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "priority",
+              "displayName": "priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "department_name",
+              "displayName": "department_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "submitted_at",
+              "displayName": "submitted_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "category_hint",
+              "displayName": "category_hint",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "department_email",
+              "displayName": "department_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1520,
+        -16
+      ],
+      "id": "dc540723-3863-4fd9-a9f1-c00a94b9b1b5",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "yFnPt75Kgl7UYWlC",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Generate Ticket ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Extract JSON from LLM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Ticket ID": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "MOI_details",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "MOH_details",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "MSS_details",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "MOE_details",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "other_details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract JSON from LLM": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MOI_details": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MOH_details": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MSS_details": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MOE_details": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "other_details": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        []
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "e9af63f7-a219-451c-b10c-68feccbcdff1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7b95de44733eeac34e9f7a9279a28bd1d195593eb3fc0df4e291199372177cab"
+  },
+  "id": "gJGCalCAWOQpRy7h",
+  "tags": []
+}
